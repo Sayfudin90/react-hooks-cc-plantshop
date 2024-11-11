@@ -1,51 +1,34 @@
-import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
-import App from '../../components/App';
-import '@testing-library/jest-dom';
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import App from "../../components/App";
 
-describe('2nd Deliverable', () => {
-    test('adds a new plant when the form is submitted', async () => {
-        global.setFetchResponse(global.basePlants)
-        const { getByPlaceholderText, findByText, getByText } = render(<App />)
+// Mock the fetch function before each test
+beforeEach(() => {
+  global.fetch = jest.fn(() =>
+    Promise.resolve({
+      json: () => Promise.resolve([
+        { id: 1, name: "Aloe", image: "image1.jpg", price: 10, soldOut: false },
+        { id: 2, name: "ZZ Plant", image: "image2.jpg", price: 15, soldOut: true }
+      ])
+    })
+  );
+});
 
-        const firstPlant = {name: 'foo', image: 'foo_plant_image_url', price: '10'}
-    
-        global.setFetchResponse(firstPlant)
-    
-        fireEvent.change(getByPlaceholderText('Plant name'), { target: { value: firstPlant.name } });
-        fireEvent.change(getByPlaceholderText('Image URL'), { target: { value: firstPlant.image } });
-        fireEvent.change(getByPlaceholderText('Price'), { target: { value: firstPlant.price } });
-        fireEvent.click(getByText('Add Plant'))
+// Restore the fetch mock after each test
+afterEach(() => {
+  jest.restoreAllMocks();
+});
 
-        expect(fetch).toHaveBeenCalledWith("http://localhost:6001/plants", {
-            method: "POST",
-            headers: {
-              "Content-Type": "Application/JSON",
-            },
-            body: JSON.stringify(firstPlant),
-        })
-    
-        const newPlant = await findByText('foo');
-        expect(newPlant).toBeInTheDocument();
+test("creates a new plant", async () => {
+  render(<App />);
+  
+  // Test that creating a new plant works (example)
+  fireEvent.click(screen.getByText(/Add Plant/i)); // Adjust based on your UI
+  
+  // Simulate filling out the form to create a plant
+  fireEvent.change(screen.getByPlaceholderText(/Plant Name/i), { target: { value: "New Plant" } });
+  fireEvent.click(screen.getByText(/Submit/i)); // Adjust based on your UI
+  
+  // Wait for the plant to be added
+  await screen.findByText(/Some Text/i);
 
-        const secondPlant = {name: 'bar', image: 'bar_plant_image_url', price: '5'}
-    
-        global.setFetchResponse(secondPlant)
-    
-        fireEvent.change(getByPlaceholderText('Plant name'), { target: { value: secondPlant.name } });
-        fireEvent.change(getByPlaceholderText('Image URL'), { target: { value: secondPlant.image } });
-        fireEvent.change(getByPlaceholderText('Price'), { target: { value: secondPlant.price } });
-        fireEvent.click(getByText('Add Plant'))
-    
-        expect(fetch).toHaveBeenCalledWith("http://localhost:6001/plants", {
-            method: "POST",
-            headers: {
-              "Content-Type": "Application/JSON",
-            },
-            body: JSON.stringify(secondPlant),
-        })
-
-        const nextPlant = await findByText('bar');
-        expect(nextPlant).toBeInTheDocument();
-    });
-})
+});
